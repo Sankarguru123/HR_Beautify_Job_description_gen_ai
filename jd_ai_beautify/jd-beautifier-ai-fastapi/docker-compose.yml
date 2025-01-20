@@ -1,0 +1,52 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Kyyba
+      POSTGRES_DB: jd_ai
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app
+
+  backend:
+    build: ./fastapi_streamlit_app/sqlalchemy/app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./fastapi_streamlit_app/sqlalchemy/app:/app
+    restart: always
+    networks:
+      - app
+    container_name: backend
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:Kyyba@host.docker.internal:5432/jd_ai
+
+  frontend:
+    build: ./fastapi_streamlit_app/sqlalchemy/app_frontend
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./fastapi_streamlit_app/sqlalchemy/app_frontend:/app
+    restart: always
+    networks:
+      - app
+    container_name: frontend
+    depends_on:
+      - backend
+    environment:
+      API_BASE_URL: http://backend:8000
+
+networks:
+  app:
+    driver: bridge
+
+volumes:
+  postgres_data:
